@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arcanum Academy Attendance System</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="main-title">Arcanum Academy</h1>
+            <h2 class="subtitle">Attendance & Tracking System</h2>
+        </div>
+        
+        <div class="content-grid">
+            <div class="card">
+                <h3>Council Login</h3>
+                <p>Access the council dashboard with role-based permissions for attendance management and logout tracking.</p>
+                <a href="/login" class="btn btn-primary">Council Login</a>
+            </div>
+            
+            <div class="card">
+                <h3>Member Attendance</h3>
+                <p>Submit your attendance for main events. Available daily from 5:00 AM to 10:00 PM GMT+8.</p>
+                <a href="/attendance" class="btn btn-secondary">Submit Attendance</a>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>&copy; 2024 Arcanum Academy Gaming Community</p>
+        </div>
+    </div>
+    
+    <script src="/js/utils.js"></script>
+    <script>
+        // Check if user is already logged in
+        fetch('/api/auth/status')
+            .then(response => response.json())
+            .then(data => {
+                if (data.authenticated) {
+                    window.location.href = '/dashboard';
+                }
+            })
+            .catch(error => {
+                console.log('Not authenticated');
+            });
+    </script>
+</body>
+</html>

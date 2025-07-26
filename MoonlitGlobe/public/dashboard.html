@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Arcanum Academy Attendance System</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="dashboard-header">
+            <div class="header-left">
+                <h1 class="main-title">Arcanum Academy Dashboard</h1>
+                <p id="user-info" class="user-info"></p>
+            </div>
+            <div class="header-right">
+                <button id="logout-btn" class="btn btn-secondary">Logout</button>
+            </div>
+        </div>
+        
+        <div class="dashboard-nav">
+            <button class="nav-btn active" data-tab="overview">Overview</button>
+            <button class="nav-btn" data-tab="attendance">Attendance</button>
+            <button class="nav-btn" data-tab="logout">Logout Tracking</button>
+            <button class="nav-btn" data-tab="management" id="management-tab" style="display: none;">Management</button>
+        </div>
+        
+        <!-- Overview Tab -->
+        <div id="overview-tab" class="tab-content active">
+            <div class="dashboard-grid">
+                <div class="card">
+                    <h3>Today's Attendance</h3>
+                    <div class="chart-container">
+                        <canvas id="attendanceChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>Recent Activity</h3>
+                    <div id="recent-activity" class="activity-list">
+                        <p class="loading">Loading activity...</p>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>Quick Actions</h3>
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" onclick="switchTab('attendance')">Record Attendance</button>
+                        <button class="btn btn-secondary" onclick="switchTab('logout')">Submit Logout</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Attendance Tab -->
+        <div id="attendance-tab" class="tab-content">
+            <div class="section-header">
+                <h2>Attendance Management</h2>
+                <div class="filters">
+                    <select id="main-filter">
+                        <option value="">All Mains</option>
+                    </select>
+                    <input type="date" id="date-filter">
+                    <button class="btn btn-primary" onclick="loadAttendanceRecords()">Filter</button>
+                </div>
+            </div>
+            
+            <div class="attendance-actions" id="attendance-actions">
+                <h3>Add Attendance Record</h3>
+                <form id="attendance-form">
+                    <div class="form-row">
+                        <select id="attendance-main" required>
+                            <option value="">Select Main</option>
+                        </select>
+                        <select id="attendance-status">
+                            <option value="present">Present</option>
+                            <option value="absent">Absent</option>
+                            <option value="late">Late</option>
+                        </select>
+                        <button type="submit" class="btn btn-primary">Add Record</button>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="records-table">
+                <table id="attendance-table">
+                    <thead>
+                        <tr>
+                            <th>Date/Time</th>
+                            <th>Main</th>
+                            <th>Status</th>
+                            <th>Created By</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendance-records">
+                        <tr>
+                            <td colspan="5" class="loading">Loading records...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Logout Tab -->
+        <div id="logout-tab" class="tab-content">
+            <div class="logout-section">
+                <div class="logout-form-section">
+                    <h2>Daily Logout Form</h2>
+                    <form id="logout-form">
+                        <div class="form-group">
+                            <label for="logout-position">Position</label>
+                            <input type="text" id="logout-position" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="logout-datetime">Date/Time</label>
+                            <input type="datetime-local" id="logout-datetime" required>
+                        </div>
+                        
+                        <div class="logout-activities">
+                            <h3>Activities</h3>
+                            <div class="activity-grid">
+                                <div class="activity-item">
+                                    <label for="dropped-links">Dropped Links</label>
+                                    <input type="number" id="dropped-links" min="0" value="0">
+                                    <span class="score">× 50 points</span>
+                                </div>
+                                
+                                <div class="activity-item">
+                                    <label for="recruits">Recruits</label>
+                                    <input type="number" id="recruits" min="0" value="0">
+                                    <span class="score">× 500 points</span>
+                                </div>
+                                
+                                <div class="activity-item">
+                                    <label for="nicknames-set">Nicknames Set</label>
+                                    <input type="number" id="nicknames-set" min="0" value="0">
+                                    <span class="score">× 50 points</span>
+                                </div>
+                                
+                                <div class="activity-item">
+                                    <label for="game-handled">Game Handled</label>
+                                    <input type="number" id="game-handled" min="0" value="0">
+                                    <span class="score">× 1000 points</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="attendance-breakdown">
+                            <h3>Attendance Breakdown</h3>
+                            <div id="attendance-breakdown-content">
+                                <p>Select date to see attendance breakdown</p>
+                            </div>
+                        </div>
+                        
+                        <div class="total-score">
+                            <h3>Total Score: <span id="calculated-score">0</span></h3>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">Submit Logout</button>
+                    </form>
+                </div>
+                
+                <div class="logout-records-section">
+                    <h2>Logout Records</h2>
+                    <div class="logout-filters">
+                        <input type="date" id="logout-date-filter">
+                        <button class="btn btn-secondary" onclick="loadLogoutRecords()">Filter</button>
+                    </div>
+                    <div id="logout-records" class="logout-records">
+                        <p class="loading">Loading logout records...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Management Tab (Owner/Elder only) -->
+        <div id="management-tab" class="tab-content">
+            <div class="management-section">
+                <h2>User Management</h2>
+                
+                <div class="management-actions">
+                    <h3>Create New User</h3>
+                    <form id="create-user-form">
+                        <div class="form-row">
+                            <input type="text" id="new-username" placeholder="Username" required>
+                            <input type="password" id="new-password" placeholder="Password" required>
+                            <input type="email" id="new-email" placeholder="Email (optional)">
+                            <select id="new-role" required>
+                                <option value="">Select Role</option>
+                                <option value="handler">Handler</option>
+                                <option value="moderator">Moderator</option>
+                                <option value="elder">Elder</option>
+                                <option value="owner">Owner</option>
+                            </select>
+                            <button type="submit" class="btn btn-primary">Create User</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="users-list">
+                    <h3>All Users</h3>
+                    <div id="users-table-container">
+                        <p class="loading">Loading users...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/js/utils.js"></script>
+    <script src="/js/dashboard.js"></script>
+    <script src="/js/attendance.js"></script>
+    <script src="/js/logout.js"></script>
+</body>
+</html>

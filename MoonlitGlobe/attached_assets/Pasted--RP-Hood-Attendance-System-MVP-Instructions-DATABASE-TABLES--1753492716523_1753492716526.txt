@@ -1,0 +1,241 @@
+# RP Hood Attendance System - MVP Instructions
+
+==============================
+DATABASE TABLES
+==============================
+
+1) Role
+   - id (PK)
+   - roleName (owner, moderator, elder, handler)
+
+2) User
+   - userID (PK)
+   - username
+   - password_hash
+   - email
+   - roleID (FK to Role.id)
+
+3) Main
+   - mainID (PK)
+   - name
+   - description
+
+4) HandlerMainAssignment
+   - id (PK) OR composite PK (userID + mainID)
+   - userID (FK to User)
+   - mainID (FK to Main)
+
+5) AttendanceRecord
+   - attendanceID (PK)
+   - createdByUserID (FK to User)
+   - mainID (FK to Main)
+   - dateAndTime
+   - status (present, absent, etc)
+
+6) MemberAttendance
+   - id (PK)
+   - mainID (FK to Main)
+   - date
+   - ip_address
+   - memberCode (optional)
+
+7) LogoutRecord
+   - logoutID (PK)
+   - userID (FK to User)
+   - position (manual input)
+   - dateTime (manual input)
+   - attendeesCount
+   - droppedLinks
+   - recruits
+   - nicknamesSet
+   - gameHandled
+   - totalScore (computed)
+   - createdAt
+   - updatedAt
+
+==============================
+USER ROLES AND ACCESS LEVELS
+==============================
+
+- OWNER
+  * Full access to everything (CRUD on all data)
+  * Can create user accounts for other council roles
+  * Can promote or demote any user
+  * Can assign Handlers to Mains
+  * No time restrictions
+
+- ELDER
+  * Full access to everything (CRUD on all data)
+  * Can create user accounts for other council roles
+  * Can promote or demote any user
+  * Can assign Handlers to Mains
+  * No time restrictions
+
+- MODERATOR
+  * Read-only view of all Mains and attendance records
+  * Can add and delete attendance records for any Main at any time
+
+- HANDLER / LEAD
+  * Can view only their assigned Mains (HandlerMainAssignment)
+  * Can add and delete attendance records only for their assigned Mains
+  * Read-only access to statistics
+  * No time restrictions
+
+- MEMBERS (public)
+  * Can submit attendance via a public form
+  * No login required
+  * Limited to one submission per day per Main
+  * Attendance form only accepts submissions from 6:00 AM to 9:00 PM GMT+8
+
+==============================
+API ROUTES (EXAMPLES)
+==============================
+
+[AUTH]
+POST /login
+  - Input: username, password
+  - Output: session token
+
+POST /logout
+  - Invalidates the session token
+
+[ACCOUNT MANAGEMENT]
+POST /create-user
+  - Owner or Elder only
+  - Create councilUser account with role assignment
+
+POST /promote-user
+  - Owner or Elder only
+  - Change user's roleID
+
+POST /assign-main
+  - Assign a user to a Main (for handlers)
+
+[MEMBER ATTENDANCE]
+POST /member-attendance
+  - Input: mainID, optional memberCode
+  - Logic: check if same IP+mainID already submitted today
+  - Create record (6AM–9PM only)
+
+[ATTENDANCE RECORDS]
+GET /attendance-records
+  - List attendance records (filter by mainID)
+  - Access rules:
+      - Owner, Elder: all records
+      - Moderator: all records
+      - Handler: only their assigned Mains
+
+POST /attendance-records
+  - Create record for a Main
+  - Same role-based permissions
+
+DELETE /attendance-records/{id}
+  - Delete record
+  - Same role-based permissions
+
+[LOGOUT RECORDS]
+POST /logout-record
+  - Input: position, dateTime, manual inputs (n)
+  - Automatically compute scores
+  - Save to logoutRecord
+
+GET /logout-records
+  - List logout records
+  - Users see their own; Owner and Elder can see all
+
+==============================
+LOG-OUT SYSTEM DETAILS
+==============================
+
+A full logout tracking system is required for all council roles. Each user fills this form manually at the end of the day.
+
+📄 LOG-OUT FORM
+─────────────────────────────
+𝗡𝗮𝗺𝗲:      [auto-filled]
+𝗣𝗼𝘀𝗶𝘁𝗶𝗼𝗻:  [manual input]
+𝗗𝗮𝘁𝗲/𝗧𝗶𝗺𝗲: [manual input]
+
+Manual input (n) per activity:
+-  𝙖𝙩𝙩𝙚𝙣𝙙𝙚𝙚𝙨 (main x):   n × 100
+- 𝙙𝙧𝙤𝙥𝙥𝙚𝙙 𝙡𝙞𝙣𝙠𝙨:     n × 50
+- 𝙧𝙚𝙘𝙧𝙪𝙞𝙩𝙨:          n × 500
+- 𝙣𝙞𝙘𝙠𝙣𝙖𝙢𝙚𝙨 𝙨𝙚𝙩:     n × 50
+- 𝙜𝙖𝙢𝙚 𝙝𝙖𝙣𝙙𝙡𝙚𝙙:     n × 1000
+
+🧮 TOTAL = sum of all scores
+
+🅰️ For ‘attendees’:
+- Auto-filled from daily attendance count per Main
+- Pie chart shown on dashboard
+
+Role filtering:
+- Handler/Lead: only their assigned Mains
+- Moderator, Elder, Owner: all Mains
+
+Users can view:
+- Own logout stats (daily + cumulative)
+- Charts (pie/bar)
+
+==============================
+DASHBOARD VISUALS
+==============================
+
+- Role-based dashboard views:
+  * HANDLER/LEAD: see only assigned Mains
+  * MODERATOR: read-only for all Mains, edit attendance
+  * ELDER/OWNER: full access, manage accounts and data
+
+- Features:
+  * Pie chart of attendance per Main
+  * Table of logout stats and totals
+  * Date filter for analytics
+  * Export options (CSV/PDF)
+
+==============================
+BACKEND SETUP
+==============================
+
+Recommended stack:
+- Vanilla HTML/CSS/JS frontend
+- Supabase (PostgreSQL)
+- Node.js + Express
+
+Backend logic:
+1) Create tables using Supabase
+2) Secure endpoints with Supabase Auth or JWT
+3) Enforce role-based access via middleware
+4) Rate-limit or block duplicate public attendance
+5) Compute logout form totals on submission
+
+==============================
+FRONTEND MVP
+==============================
+
+- Login screen
+- Role-based dashboard views
+- Admin Dashboard:
+  * List of attendance records
+  * Add/Delete buttons (role-dependent)
+  * Logout form (manual + auto compute)
+- Public attendance form (open 6AM–9PM)
+- Charts using Chart.js or ApexCharts
+
+==============================
+EXTRAS & NEXT STEPS
+==============================
+
+- Improve UI/UX
+- Real-time updates using Supabase subscriptions
+- PDF and CSV export
+- Multi-day chart filtering
+- Role audit logs (who promoted/demoted who)
+- Password reset system
+
+
+Use the following image as THEME and as BACKGROUND. You are to use CLASSICAL FONT STYLES.
+
+
+FOR NOW:
+Add this account, as owner:
+zionrenn
+Zion101%!
