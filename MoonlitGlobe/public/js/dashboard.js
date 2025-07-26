@@ -113,13 +113,22 @@ async function loadAttendanceChart() {
             credentials: 'include'
         });
         
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        
         const data = await response.json();
         
-        if (data.success) {
+        if (data.success && data.stats) {
             createAttendanceChart(data.stats);
+        } else {
+            // Create chart with no data
+            createAttendanceChart(null);
         }
     } catch (error) {
         console.error('Error loading attendance chart:', error);
+        // Create chart with no data on error
+        createAttendanceChart(null);
     }
 }
 
@@ -128,6 +137,32 @@ function createAttendanceChart(stats) {
     
     if (attendanceChart) {
         attendanceChart.destroy();
+    }
+    
+    // Handle case where stats is undefined or not an array
+    if (!stats || !Array.isArray(stats) || stats.length === 0) {
+        // Create a simple "No Data" chart
+        attendanceChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: ['No Data Available'],
+                datasets: [{
+                    data: [1],
+                    backgroundColor: ['#ddd'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+        return;
     }
     
     const labels = stats.map(stat => stat.main_name);
@@ -184,10 +219,16 @@ async function loadRecentActivity() {
             credentials: 'include'
         });
         
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        
         const data = await response.json();
         
-        if (data.success) {
+        if (data.success && data.records) {
             displayRecentActivity(data.records);
+        } else {
+            displayRecentActivity(null);
         }
     } catch (error) {
         console.error('Error loading recent activity:', error);
@@ -197,6 +238,12 @@ async function loadRecentActivity() {
 
 function displayRecentActivity(records) {
     const container = document.getElementById('recent-activity');
+    
+    // Handle case where records is undefined or not an array
+    if (!records || !Array.isArray(records)) {
+        container.innerHTML = '<p class="error">No activity data available</p>';
+        return;
+    }
     
     if (records.length === 0) {
         container.innerHTML = '<p>No recent activity</p>';

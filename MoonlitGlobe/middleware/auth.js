@@ -84,7 +84,7 @@ const getUserContext = async (userID) => {
       GROUP BY u.user_id, u.username, r.role_name
     `);
 
-    return userContext.rows[0] || null;
+    return userContext && userContext.rows && userContext.rows[0] ? userContext.rows[0] : null;
   } catch (error) {
     console.error('Error getting user context:', error);
     return null;
